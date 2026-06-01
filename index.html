@@ -41,6 +41,13 @@ header{display:flex;align-items:center;justify-content:space-between;padding:1.2
 .ac-item:hover{background:var(--surface2)}
 .ac-item small{color:var(--text3);font-size:12px;display:block;margin-top:1px}
 
+/* ── Gemt sted chip ── */
+.loc-chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--blue-text);background:var(--blue-bg);border:1px solid var(--blue-border);border-radius:20px;padding:4px 12px 4px 9px;cursor:pointer;transition:background .15s;white-space:nowrap}
+.loc-chip:hover{background:var(--surface2)}
+.loc-chip svg{flex-shrink:0;opacity:.7}
+.loc-chip-x{margin-left:4px;opacity:.5;font-size:15px;line-height:1}
+.loc-chip-x:hover{opacity:1}
+
 /* ── State ── */
 .state{text-align:center;padding:4rem 0}
 .state h2{font-size:17px;font-weight:500;margin-bottom:.4rem}
@@ -63,6 +70,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:1.2
 .b-ec{background:var(--blue-bg);color:var(--blue-text);border-color:var(--blue-border)}
 .b-yr{background:var(--green-bg);color:var(--green-text);border-color:var(--green-border)}
 .b-avg{background:var(--surface2);color:var(--text2);border-color:var(--border-md)}
+.b-gfs{background:#f3eeff;color:#4a1d8a;border-color:#c9b5f5}
+.b-ec46{background:#fff4dc;color:#7a4e00;border-color:#f5c97a}
 .b-agree{background:#e5f5ec;color:#0f5c35;border-color:#b8e8cc}
 .b-disagree{background:var(--amber-bg);color:var(--amber-text);border-color:#f5d5a0}
 
@@ -112,10 +121,12 @@ header{display:flex;align-items:center;justify-content:space-between;padding:1.2
 .week-icon{font-size:26px;display:block;margin-bottom:.4rem;line-height:1}
 .week-trange{font-size:14px;font-family:'DM Mono',monospace;color:var(--text);margin-bottom:2px}
 .week-precip{font-size:12px;color:var(--text2);margin-bottom:.6rem}
-.week-src-row{display:flex;flex-direction:column;gap:3px}
+.week-src-row{display:flex;flex-direction:column;gap:3px;margin-bottom:.4rem}
 .week-src{display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:3px 7px;border-radius:6px}
 .week-src.ec{background:var(--blue-bg);color:var(--blue-text)}
 .week-src.yr{background:var(--green-bg);color:var(--green-text)}
+.week-src.gfs{background:#f3eeff;color:#4a1d8a}
+.week-src.ec46{background:#fff4dc;color:#7a4e00}
 .week-src .src-val{font-family:'DM Mono',monospace;font-weight:500}
 .week-agree{margin-top:5px;font-size:10px;font-weight:500;padding:2px 7px;border-radius:20px;display:inline-block;border:1px solid}
 
@@ -168,6 +179,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:1.2
       <text x="60" y="60" font-family="DM Sans,sans-serif" font-size="22" font-weight="300" fill="#2d6ed6">Mand</text>
     </svg>
   </div>
+    <div id="locChipWrap" style="flex:1;display:flex;align-items:center;gap:8px;padding:0 10px"></div>
     <div class="search-wrap">
       <input class="search-input" id="searchInput" type="text" placeholder="Søg efter by…" autocomplete="off" aria-label="Søg efter by">
       <button class="search-btn" id="searchBtn" aria-label="Søg">
@@ -238,12 +250,13 @@ function selectPlace(el){
   autocomplete.classList.remove('open');
   searchInput.value = '';
   saveLocation(loc);
+  showLocChip(loc);
   loadWeather(loc);
 }
 
 // ── Loading / empty ──
 function showLoading(){
-  app.innerHTML = `<div class="state"><div class="spinner"></div><h2>Henter prognose…</h2><p>Trækker data fra ECMWF og Yr.no</p></div>`;
+  app.innerHTML = `<div class="state"><div class="spinner"></div><h2>Henter prognose…</h2><p>Trækker data fra Yr.no, ECMWF og GFS…</p></div>`;
 }
 function showEmpty(){
   app.innerHTML = `<div class="state">
@@ -255,12 +268,14 @@ function showEmpty(){
 async function loadWeather(loc){
   showLoading();
   try{
-    const [ec, yr, clim] = await Promise.all([
+    const [ec, yr, clim, gfs, ec46] = await Promise.all([
       fetchECMWF(loc.lat, loc.lon),
       fetchYr(loc.lat, loc.lon),
-      fetchClimate(loc.lat, loc.lon)
+      fetchClimate(loc.lat, loc.lon),
+      fetchGFS(loc.lat, loc.lon),
+      fetchEC46(loc.lat, loc.lon)
     ]);
-    render(loc, ec, yr, clim);
+    render(loc, ec, yr, clim, gfs, ec46);
   }catch(e){
     app.innerHTML = `<div class="state"><h2>Noget gik galt</h2><p>${e.message||'Prøv igen om lidt'}</p></div>`;
   }
@@ -290,6 +305,26 @@ async function fetchClimate(lat, lon){
     const start = `${y}-${pad(m)}-01`;
     const end   = `${y}-${pad(m)}-${daysInMonth}`;
     const url = `https://climate-api.open-meteo.com/v1/climate?latitude=${lat}&longitude=${lon}&start_date=${start}&end_date=${end}&models=CMIP6&daily=temperature_2m_mean,precipitation_sum`;
+    const res = await fetch(url);
+    if(!res.ok) return null;
+    return res.json();
+  }catch{ return null; }
+}
+
+// ── Fetch GFS (NOAA) via Open-Meteo ──
+async function fetchGFS(lat, lon){
+  try{
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode&timezone=auto&forecast_days=16&models=gfs_seamless`;
+    const res = await fetch(url);
+    if(!res.ok) return null;
+    return res.json();
+  }catch{ return null; }
+}
+
+// ── Fetch ECMWF EC46 sub-seasonal (ensemble, 6 uger) ──
+async function fetchEC46(lat, lon){
+  try{
+    const url = `https://seasonal-api.open-meteo.com/v1/seasonal?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timeformat=iso8601&forecast_days=28`;
     const res = await fetch(url);
     if(!res.ok) return null;
     return res.json();
@@ -385,7 +420,7 @@ function agree(a,b,threshold){ return (a!=null&&b!=null) ? Math.abs(a-b)<=thresh
 const MONTHS = ['januar','februar','marts','april','maj','juni','juli','august','september','oktober','november','december'];
 
 // ── Render ──
-function render(loc, ec, yrRaw, clim){
+function render(loc, ec, yrRaw, clim, gfsRaw, ec46Raw){
   const now = new Date();
   const mname = MONTHS[now.getMonth()];
   const todayStr = now.toISOString().slice(0,10);
@@ -400,31 +435,73 @@ function render(loc, ec, yrRaw, clim){
     wcode: ec.daily.weathercode[i]
   }));
 
+  // GFS days
+  const gfsDays = gfsRaw ? gfsRaw.daily.time.map((date,i)=>({
+    date,
+    tmax: gfsRaw.daily.temperature_2m_max[i],
+    tmin: gfsRaw.daily.temperature_2m_min[i],
+    tmean: (gfsRaw.daily.temperature_2m_max[i]+gfsRaw.daily.temperature_2m_min[i])/2,
+    precip: gfsRaw.daily.precipitation_sum[i]||0,
+    wcode: gfsRaw.daily.weathercode[i]
+  })) : [];
+  const gfsMap = {};
+  gfsDays.forEach(d=>{ gfsMap[d.date]=d; });
+
+  // EC46 ensemble – beregn mean af alle members
+  function ec46WeekMean(startDay, days){
+    if(!ec46Raw||!ec46Raw.daily) return null;
+    const times = ec46Raw.daily.time;
+    const allTmax = Object.keys(ec46Raw.daily).filter(k=>k.startsWith('temperature_2m_max_member'));
+    const allTmin = Object.keys(ec46Raw.daily).filter(k=>k.startsWith('temperature_2m_min_member'));
+    const allPrecip = Object.keys(ec46Raw.daily).filter(k=>k.startsWith('precipitation_sum_member'));
+    if(!allTmax.length) return null;
+    let tmaxSum=0,tminSum=0,precipSum=0,cnt=0;
+    for(let di=startDay; di<startDay+days && di<times.length; di++){
+      allTmax.forEach(k=>{ tmaxSum+=ec46Raw.daily[k][di]||0; });
+      allTmin.forEach(k=>{ tminSum+=ec46Raw.daily[k][di]||0; });
+      allPrecip.forEach(k=>{ precipSum+=ec46Raw.daily[k][di]||0; });
+      cnt++;
+    }
+    if(!cnt) return null;
+    const m = allTmax.length;
+    return {
+      tmean: (tmaxSum/m/cnt + tminSum/m/cnt)/2,
+      tmax: tmaxSum/m/cnt,
+      tmin: tminSum/m/cnt,
+      precip: precipSum/m/cnt*days
+    };
+  }
+
   // Yr map by date
   const yrMap = yrToDailyMap(yrRaw);
 
   // ── 7-dages dagskort ──
   const sevenDays = ecDays.slice(0,7);
 
-  // ── Ugekort: uge 1–4 fra dag 0 ──
+  // ── Ugekort: uge 1–4 ──
   const weekBlocks = [0,7,14,21].map((start,wi)=>{
     const chunk = ecDays.slice(start, start+7).filter(d=>d.tmax!=null);
     if(!chunk.length) return null;
     const yrChunk = chunk.map(d=>yrMap[d.date]).filter(Boolean);
+    const gfsChunk = chunk.map(d=>gfsMap[d.date]).filter(Boolean);
     const ecTmean = chunk.reduce((s,d)=>s+d.tmean,0)/chunk.length;
     const ecTmax  = Math.max(...chunk.map(d=>d.tmax));
     const ecTmin  = Math.min(...chunk.map(d=>d.tmin));
     const ecPrecip= chunk.reduce((s,d)=>s+d.precip,0);
     const yrTmean = yrChunk.length ? yrChunk.reduce((s,d)=>s+(d.tmean||0),0)/yrChunk.length : null;
     const yrPrecip= yrChunk.length ? yrChunk.reduce((s,d)=>s+d.precip,0) : null;
+    const gfsTmean= gfsChunk.length ? gfsChunk.reduce((s,d)=>s+d.tmean,0)/gfsChunk.length : null;
+    const gfsPrecip=gfsChunk.length ? gfsChunk.reduce((s,d)=>s+d.precip,0) : null;
+    const ec46w   = ec46WeekMean(start, 7);
     const midDay  = chunk[Math.floor(chunk.length/2)];
-    // Date range label
     const startD  = new Date(chunk[0].date+'T12:00:00');
     const endD    = new Date(chunk[chunk.length-1].date+'T12:00:00');
     const rangeLabel = `${startD.getDate()}. – ${endD.getDate()}. ${MONTHS[endD.getMonth()].slice(0,3)}`;
-    const tAgree  = agree(ecTmean, yrTmean, 2);
-    const pAgree  = agree(ecPrecip, yrPrecip, 15);
-    return { wi, rangeLabel, ecTmean, ecTmax, ecTmin, ecPrecip, yrTmean, yrPrecip, tAgree, pAgree, icon:wmoIcon(midDay.wcode) };
+    // Enighed: alle tilgængelige modeller
+    const temps = [ecTmean, gfsTmean, yrTmean, ec46w?.tmean].filter(v=>v!=null);
+    const tSpread = temps.length>1 ? Math.max(...temps)-Math.min(...temps) : null;
+    const consensus = tSpread!=null ? (tSpread<2?'agree':tSpread<4?'close':'disagree') : 'solo';
+    return { wi, rangeLabel, ecTmean, ecTmax, ecTmin, ecPrecip, yrTmean, yrPrecip, gfsTmean, gfsPrecip, ec46w, tSpread, consensus, icon:wmoIcon(midDay.wcode) };
   }).filter(Boolean);
 
   // Climate normals
@@ -465,8 +542,8 @@ function render(loc, ec, yrRaw, clim){
   <div class="sec-head">
     <div class="sec-title">De næste 7 dage</div>
     <div class="sec-badges">
-      <span class="badge b-ec">ECMWF</span>
       <span class="badge b-yr">Yr.no</span>
+      <span class="badge b-ec">ECMWF</span>
     </div>
   </div>
   <div class="days-scroll">
@@ -516,42 +593,55 @@ function render(loc, ec, yrRaw, clim){
   <div class="sec-head">
     <div class="sec-title">De kommende 4 uger</div>
     <div class="sec-badges">
-      <span class="badge b-ec">ECMWF · 16 dg</span>
-      <span class="badge b-yr">Yr.no · 10 dg</span>
+      <span class="badge b-ec">ECMWF</span>
+      <span class="badge b-gfs">GFS</span>
+      <span class="badge b-ec46">EC46</span>
     </div>
   </div>
   <div class="weeks-grid">
     ${weekBlocks.map((w,i)=>{
-      const tAgreeCls = w.tAgree===true?'b-agree':w.tAgree===false?'b-disagree':'b-avg';
-      const tAgreeLabel = w.tAgree===true?'Enige om temp.':w.tAgree===false?'Uenige om temp.':'Kun ECMWF';
-      const yrRow = w.yrTmean!=null ? `
-        <div class="week-src yr">
-          <span>Yr.no</span>
-          <span class="src-val">${fmt1(w.yrTmean)}° · ${w.yrPrecip!=null?Math.round(w.yrPrecip)+' mm':'–'}</span>
-        </div>` : '';
       const normDiff = normTemp!=null ? (w.ecTmean-normTemp) : null;
-      const normStr = normDiff!=null ? (normDiff>0.3?`+${normDiff.toFixed(1)}° ift norm`:normDiff<-0.3?`${normDiff.toFixed(1)}° ift norm`:`≈ normalt`) : '';
-      return `<div class="week-card">
-        <div class="week-label">Uge ${i+1} · ${w.rangeLabel}</div>
-        <span class="week-icon">${w.icon}</span>
-        <div class="week-trange">${Math.round(w.ecTmin)}° – ${Math.round(w.ecTmax)}°</div>
-        <div class="week-precip">${Math.round(w.ecPrecip)} mm${normStr?' · '+normStr:''}</div>
-        <div class="week-src-row">
-          <div class="week-src ec">
-            <span>ECMWF</span>
-            <span class="src-val">${fmt1(w.ecTmean)}° · ${Math.round(w.ecPrecip)} mm</span>
-          </div>
-          ${yrRow}
-        </div>
-        ${w.yrTmean!=null?`<span class="week-agree badge ${tAgreeCls}">${tAgreeLabel}</span>`:''}
-      </div>`;
+      const normStr = normDiff!=null
+        ? (normDiff>0.3 ? '+'+normDiff.toFixed(1)+'° ift. norm'
+          : normDiff<-0.3 ? normDiff.toFixed(1)+'° ift. norm'
+          : '≈ normalt')
+        : '';
+      const consCls = w.consensus==='agree' ? 'b-agree'
+        : w.consensus==='close' ? 'b-avg'
+        : w.consensus==='disagree' ? 'b-disagree' : '';
+      const consLbl = w.consensus==='agree' ? 'Kilderne er enige'
+        : w.consensus==='close' ? 'Lille uenighed'
+        : w.consensus==='disagree' ? 'Stor uenighed' : '';
+      const gfsRow = w.gfsTmean!=null
+        ? '<div class="week-src gfs"><span>GFS/NOAA</span><span class="src-val">'+fmt1(w.gfsTmean)+'° · '+(w.gfsPrecip!=null?Math.round(w.gfsPrecip)+' mm':'–')+'</span></div>'
+        : '';
+      const yrRow = w.yrTmean!=null
+        ? '<div class="week-src yr"><span>Yr.no</span><span class="src-val">'+fmt1(w.yrTmean)+'° · '+(w.yrPrecip!=null?Math.round(w.yrPrecip)+' mm':'–')+'</span></div>'
+        : '';
+      const ec46Row = w.ec46w!=null
+        ? '<div class="week-src ec46"><span>EC46</span><span class="src-val">'+fmt1(w.ec46w.tmean)+'° · '+Math.round(w.ec46w.precip)+' mm</span></div>'
+        : '';
+      const spreadStr = w.tSpread!=null ? '±'+(w.tSpread/2).toFixed(1)+'° spredning' : '';
+      const agreeBadge = consCls ? '<span class="week-agree badge '+consCls+'">'+consLbl+'</span>' : '';
+      const spreadBadge = spreadStr ? '<span class="week-agree badge b-avg">'+spreadStr+'</span>' : '';
+      return '<div class="week-card">'
+        +'<div class="week-label">Uge '+(i+1)+' · '+w.rangeLabel+'</div>'
+        +'<span class="week-icon">'+w.icon+'</span>'
+        +'<div class="week-trange">'+Math.round(w.ecTmin)+'° – '+Math.round(w.ecTmax)+'°</div>'
+        +'<div class="week-precip">'+Math.round(w.ecPrecip)+' mm'+(normStr?' · '+normStr:'')+'</div>'
+        +'<div class="week-src-row">'
+          +'<div class="week-src ec"><span>ECMWF</span><span class="src-val">'+fmt1(w.ecTmean)+'° · '+Math.round(w.ecPrecip)+' mm</span></div>'
+          +gfsRow+yrRow+ec46Row
+        +'</div>'
+        +'<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px">'+agreeBadge+spreadBadge+'</div>'
+        +'</div>';
     }).join('')}
   </div>
 </div>
 
 <div class="disclaimer a5">
   Grøn prik = kilderne er enige (±2°). Orange prik = uenige. Langtidsprognoser er vejledende — usikkerheden stiger markant ud over 7 dage.
-  Klimanormaler: CMIP6 1991–2020. Datakilder: <a href="https://open-meteo.com" target="_blank">open-meteo.com</a> · <a href="https://api.met.no" target="_blank">api.met.no (Yr.no)</a>
+  7-dage: Yr.no + ECMWF. 4 uger: ECMWF · GFS/NOAA · EC46 ensemble. Klimanorm: CMIP6 1991–2020. Kilder: <a href="https://open-meteo.com" target="_blank">open-meteo.com</a> · <a href="https://api.met.no" target="_blank">api.met.no</a>
 </div>`;
 
   requestAnimationFrame(()=>drawChart(chartTemps, chartDates, normTemp));
@@ -901,8 +991,26 @@ function drawDetailChart(hours){
 }
 
 // ── Init ──
+function showLocChip(loc){
+  const wrap = document.getElementById('locChipWrap');
+  if(!wrap) return;
+  if(!loc){ wrap.innerHTML=''; return; }
+  wrap.innerHTML = '<div class="loc-chip" id="locChip">'
+    +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 13-8 13s-8-7-8-13a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>'
+    +escHtml(loc.name)
+    +'<span class="loc-chip-x" id="locChipX" title="Ryd gemt sted">×</span>'
+    +'</div>';
+  document.getElementById('locChipX').addEventListener('click', e=>{
+    e.stopPropagation();
+    localStorage.removeItem('vejrm_loc');
+    showLocChip(null);
+    searchInput.placeholder='Søg efter by…';
+    showEmpty();
+  });
+}
+
 const saved = loadLocation();
-if(saved){ searchInput.placeholder=saved.name; loadWeather(saved); }
+if(saved){ showLocChip(saved); loadWeather(saved); }
 else showEmpty();
 </script>
 </body>
