@@ -5,364 +5,123 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vejrmåned</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f4f0;--surface:#fff;--surface2:#f0efeb;
+  --border:rgba(0,0,0,0.08);--border-md:rgba(0,0,0,0.13);
+  --text:#1a1a18;--text2:#6b6b65;--text3:#9e9e97;
+  --blue:#1a5ccc;--blue-bg:#e8effe;--blue-text:#1a3d99;--blue-border:#c5d8fc;
+  --green:#1a7a4a;--green-bg:#e5f5ec;--green-text:#0f5c35;--green-border:#b8e8cc;
+  --amber-bg:#fff0dc;--amber-text:#8a4300;
+  --r:10px;--rlg:14px;
+}
+html{font-size:16px}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5}
 
-:root {
-  --bg: #f5f4f0;
-  --surface: #ffffff;
-  --surface2: #f0efeb;
-  --border: rgba(0,0,0,0.08);
-  --border-md: rgba(0,0,0,0.13);
-  --text: #1a1a18;
-  --text-2: #6b6b65;
-  --text-3: #9e9e97;
-  --blue: #1a5ccc;
-  --blue-bg: #e8effe;
-  --blue-text: #1a3d99;
-  --green: #1a7a4a;
-  --green-bg: #e5f5ec;
-  --green-text: #0f5c35;
-  --amber: #b35a00;
-  --amber-bg: #fff0dc;
-  --amber-text: #8a4300;
-  --red: #c0392b;
-  --radius: 10px;
-  --radius-lg: 14px;
-}
+.shell{max-width:700px;margin:0 auto;padding:0 1.25rem 4rem}
 
-html { font-size: 16px; }
-body {
-  font-family: 'DM Sans', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  line-height: 1.5;
-}
+/* ── Header ── */
+header{display:flex;align-items:center;justify-content:space-between;padding:1.4rem 0 1.2rem;border-bottom:1px solid var(--border);margin-bottom:1.75rem}
+.logo{font-size:17px;font-weight:500;letter-spacing:-.3px;white-space:nowrap}
+.logo em{font-style:normal;color:var(--blue)}
+.search-wrap{position:relative;flex:1;max-width:260px}
+.search-input{width:100%;height:36px;padding:0 36px 0 12px;border:1px solid var(--border-md);border-radius:20px;background:var(--surface);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .15s}
+.search-input:focus{border-color:var(--blue)}
+.search-input::placeholder{color:var(--text3)}
+.search-btn{position:absolute;right:4px;top:4px;width:28px;height:28px;border:none;background:var(--blue);border-radius:50%;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.search-btn:hover{background:#1447aa}
+.autocomplete{position:absolute;top:40px;left:0;right:0;background:var(--surface);border:1px solid var(--border-md);border-radius:var(--r);z-index:100;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.08);display:none}
+.autocomplete.open{display:block}
+.ac-item{padding:10px 14px;font-size:14px;cursor:pointer;border-bottom:1px solid var(--border);color:var(--text);transition:background .1s}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover{background:var(--surface2)}
+.ac-item small{color:var(--text3);font-size:12px;display:block;margin-top:1px}
 
-/* Layout */
-.shell {
-  max-width: 680px;
-  margin: 0 auto;
-  padding: 0 1.25rem 4rem;
-}
+/* ── State ── */
+.state{text-align:center;padding:4rem 0}
+.state h2{font-size:17px;font-weight:500;margin-bottom:.4rem}
+.state p{font-size:14px;color:var(--text2)}
+.spinner{width:32px;height:32px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 1rem}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-/* Header */
-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.5rem 0 1.25rem;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 1.75rem;
-}
-.logo {
-  font-size: 17px;
-  font-weight: 500;
-  letter-spacing: -0.3px;
-  color: var(--text);
-}
-.logo em { font-style: normal; color: var(--blue); }
+/* ── Location / title ── */
+.loc-line{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--text2);margin-bottom:.3rem}
+.page-title{font-size:22px;font-weight:500;letter-spacing:-.4px;margin-bottom:.2rem}
+.page-sub{font-size:13px;color:var(--text2);margin-bottom:1.5rem}
 
-/* Search */
-.search-wrap {
-  position: relative;
-  flex: 1;
-  max-width: 280px;
-}
-.search-input {
-  width: 100%;
-  height: 36px;
-  padding: 0 36px 0 12px;
-  border: 1px solid var(--border-md);
-  border-radius: 20px;
-  background: var(--surface);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 14px;
-  color: var(--text);
-  outline: none;
-  transition: border-color 0.15s;
-}
-.search-input:focus { border-color: var(--blue); }
-.search-input::placeholder { color: var(--text-3); }
-.search-btn {
-  position: absolute;
-  right: 4px; top: 4px;
-  width: 28px; height: 28px;
-  border: none;
-  background: var(--blue);
-  border-radius: 50%;
-  color: #fff;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 13px;
-  transition: background 0.15s;
-}
-.search-btn:hover { background: #1447aa; }
-.autocomplete {
-  position: absolute;
-  top: 40px; left: 0; right: 0;
-  background: var(--surface);
-  border: 1px solid var(--border-md);
-  border-radius: var(--radius);
-  z-index: 100;
-  overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  display: none;
-}
-.autocomplete.open { display: block; }
-.autocomplete-item {
-  padding: 10px 14px;
-  font-size: 14px;
-  cursor: pointer;
-  border-bottom: 1px solid var(--border);
-  color: var(--text);
-  transition: background 0.1s;
-}
-.autocomplete-item:last-child { border-bottom: none; }
-.autocomplete-item:hover { background: var(--surface2); }
-.autocomplete-item small { color: var(--text-3); font-size: 12px; display: block; margin-top: 1px; }
+/* ── Section headers ── */
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.65rem}
+.sec-title{font-size:11px;font-weight:500;letter-spacing:.6px;text-transform:uppercase;color:var(--text3)}
+.sec-badges{display:flex;gap:5px}
 
-/* State screens */
-.state-screen {
-  text-align: center;
-  padding: 4rem 0;
-}
-.state-screen svg { margin-bottom: 1rem; opacity: 0.3; }
-.state-screen h2 { font-size: 17px; font-weight: 500; color: var(--text); margin-bottom: 0.4rem; }
-.state-screen p { font-size: 14px; color: var(--text-2); }
-.spinner {
-  width: 32px; height: 32px;
-  border: 2px solid var(--border);
-  border-top-color: var(--blue);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  margin: 0 auto 1rem;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
+/* ── Badges ── */
+.badge{font-size:10px;font-weight:500;letter-spacing:.3px;padding:2px 8px;border-radius:20px;border:1px solid}
+.b-ec{background:var(--blue-bg);color:var(--blue-text);border-color:var(--blue-border)}
+.b-yr{background:var(--green-bg);color:var(--green-text);border-color:var(--green-border)}
+.b-avg{background:var(--surface2);color:var(--text2);border-color:var(--border-md)}
+.b-agree{background:#e5f5ec;color:#0f5c35;border-color:#b8e8cc}
+.b-disagree{background:var(--amber-bg);color:var(--amber-text);border-color:#f5d5a0}
 
-/* Current location badge */
-.location-badge {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: 13px; color: var(--text-2);
-  margin-bottom: 0.3rem;
-}
-.location-badge svg { opacity: 0.5; }
-.period-title {
-  font-size: 22px;
-  font-weight: 500;
-  letter-spacing: -0.4px;
-  margin-bottom: 0.2rem;
-}
-.period-sub {
-  font-size: 13px;
-  color: var(--text-2);
-  margin-bottom: 1.5rem;
-}
+/* ── 7-dages dagskort ── */
+.days-scroll{overflow-x:auto;margin-bottom:1.5rem;padding-bottom:4px}
+.days-scroll::-webkit-scrollbar{height:4px}
+.days-scroll::-webkit-scrollbar-track{background:transparent}
+.days-scroll::-webkit-scrollbar-thumb{background:var(--border-md);border-radius:4px}
+.days-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;min-width:560px}
+.day-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:.7rem .5rem;text-align:center;position:relative}
+.day-card.today{border-color:rgba(26,92,204,.35);background:var(--blue-bg)}
+.day-name{font-size:11px;font-weight:500;letter-spacing:.3px;text-transform:uppercase;color:var(--text2);margin-bottom:5px}
+.day-card.today .day-name{color:var(--blue-text)}
+.day-icon{font-size:22px;display:block;margin-bottom:4px;line-height:1}
+.day-tmax{font-size:15px;font-weight:500;font-family:'DM Mono',monospace;color:var(--text)}
+.day-tmin{font-size:12px;color:var(--text3);font-family:'DM Mono',monospace}
+.day-precip{font-size:11px;color:var(--text2);margin-top:5px}
+/* dual source row inside day card */
+.day-sources{display:flex;gap:3px;justify-content:center;margin-top:5px;flex-wrap:wrap}
+.day-src{font-size:9px;font-weight:500;padding:1px 5px;border-radius:20px;border:1px solid}
+.day-src.ec{background:var(--blue-bg);color:var(--blue-text);border-color:var(--blue-border)}
+.day-src.yr{background:var(--green-bg);color:var(--green-text);border-color:var(--green-border)}
+.agree-dot{position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%}
+.agree-dot.yes{background:#1a7a4a}
+.agree-dot.no{background:#b35a00}
 
-/* Verdict banner */
-.verdict {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 1.1rem 1.25rem;
-  margin-bottom: 1.25rem;
-  display: flex; align-items: flex-start; gap: 1rem;
-}
-.verdict-icon {
-  font-size: 26px;
-  line-height: 1;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-.verdict-label {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  color: var(--text-3);
-  margin-bottom: 3px;
-}
-.verdict-main {
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--text);
-  margin-bottom: 3px;
-}
-.verdict-detail { font-size: 13px; color: var(--text-2); }
+/* ── Ugekort ── */
+.weeks-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.5rem}
+.week-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:.85rem .9rem}
+.week-label{font-size:11px;font-weight:500;letter-spacing:.3px;text-transform:uppercase;color:var(--text3);margin-bottom:.5rem}
+.week-icon{font-size:26px;display:block;margin-bottom:.4rem;line-height:1}
+.week-trange{font-size:14px;font-family:'DM Mono',monospace;color:var(--text);margin-bottom:2px}
+.week-precip{font-size:12px;color:var(--text2);margin-bottom:.6rem}
+.week-src-row{display:flex;flex-direction:column;gap:3px}
+.week-src{display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:3px 7px;border-radius:6px}
+.week-src.ec{background:var(--blue-bg);color:var(--blue-text)}
+.week-src.yr{background:var(--green-bg);color:var(--green-text)}
+.week-src .src-val{font-family:'DM Mono',monospace;font-weight:500}
+.week-agree{margin-top:5px;font-size:10px;font-weight:500;padding:2px 7px;border-radius:20px;display:inline-block;border:1px solid}
 
-/* Metrics */
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-bottom: 1.25rem;
-}
-.metric-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.9rem 1rem;
-}
-.metric-label {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: var(--text-3);
-  margin-bottom: 6px;
-}
-.metric-value {
-  font-size: 24px;
-  font-weight: 300;
-  letter-spacing: -0.5px;
-  color: var(--text);
-  line-height: 1;
-  margin-bottom: 5px;
-  font-family: 'DM Mono', monospace;
-}
-.metric-delta {
-  font-size: 12px;
-  font-weight: 500;
-  display: inline-flex; align-items: center; gap: 3px;
-  padding: 2px 7px;
-  border-radius: 20px;
-}
-.delta-up { background: var(--amber-bg); color: var(--amber-text); }
-.delta-down { background: var(--blue-bg); color: var(--blue-text); }
-.delta-neutral { background: var(--surface2); color: var(--text-2); }
+/* ── Kurve ── */
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);padding:1rem 1.25rem;margin-bottom:1.5rem;overflow:hidden}
+.chart-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
+.chart-leg{display:flex;gap:12px}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.leg-dot{width:8px;height:8px;border-radius:50%}
+#tempChart{width:100%;height:130px;display:block}
 
-/* Source badge */
-.source-badges {
-  display: flex; gap: 5px; margin-top: 6px; flex-wrap: wrap;
-}
-.badge {
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.3px;
-  padding: 2px 7px;
-  border-radius: 20px;
-  border: 1px solid;
-}
-.badge-ecmwf { background: var(--blue-bg); color: var(--blue-text); border-color: #c5d8fc; }
-.badge-yr { background: var(--green-bg); color: var(--green-text); border-color: #b8e8cc; }
-.badge-avg { background: var(--surface2); color: var(--text-2); border-color: var(--border-md); }
+/* ── Disclaimer ── */
+.disclaimer{font-size:12px;color:var(--text3);line-height:1.65;padding-top:1rem;border-top:1px solid var(--border)}
+.disclaimer a{color:var(--text2)}
 
-/* Week grid */
-.section-title {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  color: var(--text-3);
-  margin-bottom: 0.65rem;
-}
-.weeks-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  margin-bottom: 1.25rem;
-}
-.week-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.75rem;
-  text-align: center;
-}
-.week-card.now { border-color: rgba(26,92,204,0.3); background: var(--blue-bg); }
-.week-label { font-size: 11px; color: var(--text-2); margin-bottom: 6px; }
-.week-icon { font-size: 22px; margin-bottom: 4px; display: block; }
-.week-temp { font-size: 16px; font-weight: 500; font-family: 'DM Mono', monospace; color: var(--text); }
-.week-range { font-size: 11px; color: var(--text-3); margin-top: 1px; }
-.week-rain { font-size: 11px; color: var(--text-2); margin-top: 4px; }
+/* ── Animations ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.a1{animation:fadeUp .3s ease both}
+.a2{animation:fadeUp .3s .07s ease both}
+.a3{animation:fadeUp .3s .14s ease both}
+.a4{animation:fadeUp .3s .21s ease both}
+.a5{animation:fadeUp .3s .28s ease both}
 
-/* Chart */
-.chart-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 1rem 1.25rem;
-  margin-bottom: 1.25rem;
-  overflow: hidden;
-}
-.chart-header {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 0.75rem;
-}
-.chart-legend {
-  display: flex; gap: 12px;
-}
-.legend-item {
-  display: flex; align-items: center; gap: 5px;
-  font-size: 11px; color: var(--text-2);
-}
-.legend-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-}
-#tempChart { width: 100%; height: 120px; display: block; }
-
-/* Comparison */
-.comparison-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 1rem 1.25rem;
-  margin-bottom: 1.25rem;
-}
-.comparison-row {
-  display: flex; align-items: center;
-  padding: 0.6rem 0;
-  border-bottom: 1px solid var(--border);
-  gap: 0.75rem;
-  font-size: 14px;
-}
-.comparison-row:last-child { border-bottom: none; }
-.comparison-label { flex: 1; color: var(--text-2); font-size: 13px; }
-.comparison-val {
-  font-family: 'DM Mono', monospace;
-  font-size: 14px;
-  font-weight: 500;
-  min-width: 60px;
-  text-align: right;
-}
-.val-ecmwf { color: var(--blue); }
-.val-yr { color: var(--green); }
-.comparison-agree {
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 20px;
-  white-space: nowrap;
-}
-.agree-yes { background: var(--green-bg); color: var(--green-text); }
-.agree-no { background: var(--amber-bg); color: var(--amber-text); }
-
-/* Disclaimer */
-.disclaimer {
-  font-size: 12px;
-  color: var(--text-3);
-  line-height: 1.65;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border);
-}
-.disclaimer a { color: var(--text-2); }
-
-/* Animations */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.animate { animation: fadeUp 0.3s ease both; }
-.animate-2 { animation: fadeUp 0.3s ease 0.06s both; }
-.animate-3 { animation: fadeUp 0.3s ease 0.12s both; }
-.animate-4 { animation: fadeUp 0.3s ease 0.18s both; }
-.animate-5 { animation: fadeUp 0.3s ease 0.24s both; }
-
-@media (max-width: 500px) {
-  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
-  .weeks-grid { grid-template-columns: repeat(2, 1fr); }
-}
+@media(max-width:500px){.weeks-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
@@ -370,21 +129,13 @@ header {
   <header>
     <div class="logo">vejr<em>måned</em></div>
     <div class="search-wrap">
-      <input
-        class="search-input"
-        id="searchInput"
-        type="text"
-        placeholder="Søg efter by…"
-        autocomplete="off"
-        aria-label="Søg efter by"
-      >
+      <input class="search-input" id="searchInput" type="text" placeholder="Søg efter by…" autocomplete="off" aria-label="Søg efter by">
       <button class="search-btn" id="searchBtn" aria-label="Søg">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       </button>
       <div class="autocomplete" id="autocomplete" role="listbox"></div>
     </div>
   </header>
-
   <div id="app"></div>
 </div>
 
@@ -393,503 +144,419 @@ const app = document.getElementById('app');
 const searchInput = document.getElementById('searchInput');
 const autocomplete = document.getElementById('autocomplete');
 let searchTimeout;
-let selectedLocation = null;
 
-// --- Saved location ---
-function saveLocation(loc) {
-  localStorage.setItem('vejrmaaned_location', JSON.stringify(loc));
-}
-function loadLocation() {
-  try { return JSON.parse(localStorage.getItem('vejrmaaned_location')); }
-  catch { return null; }
-}
+// ── Storage ──
+function saveLocation(loc){ localStorage.setItem('vejrm_loc', JSON.stringify(loc)); }
+function loadLocation(){ try{ return JSON.parse(localStorage.getItem('vejrm_loc')); }catch{ return null; } }
 
-// --- Search ---
-searchInput.addEventListener('input', () => {
+// ── Search ──
+searchInput.addEventListener('input', ()=>{
   clearTimeout(searchTimeout);
   const q = searchInput.value.trim();
-  if (q.length < 2) { autocomplete.classList.remove('open'); return; }
-  searchTimeout = setTimeout(() => fetchPlaces(q), 300);
+  if(q.length < 2){ autocomplete.classList.remove('open'); return; }
+  searchTimeout = setTimeout(()=>fetchPlaces(q), 300);
 });
-document.addEventListener('click', (e) => {
-  if (!e.target.closest('.search-wrap')) autocomplete.classList.remove('open');
-});
-document.getElementById('searchBtn').addEventListener('click', () => {
-  const q = searchInput.value.trim();
-  if (q.length >= 2) fetchPlaces(q);
-});
-searchInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') { const q = searchInput.value.trim(); if (q.length >= 2) fetchPlaces(q); }
-});
+document.addEventListener('click', e=>{ if(!e.target.closest('.search-wrap')) autocomplete.classList.remove('open'); });
+document.getElementById('searchBtn').addEventListener('click', ()=>{ const q=searchInput.value.trim(); if(q.length>=2) fetchPlaces(q); });
+searchInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ const q=searchInput.value.trim(); if(q.length>=2) fetchPlaces(q); }});
 
-async function fetchPlaces(query) {
-  try {
+async function fetchPlaces(query){
+  try{
     const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=6&language=da&format=json`;
     const res = await fetch(url);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    if(!res.ok) throw new Error('HTTP '+res.status);
     const data = await res.json();
     showAutocomplete(data.results || []);
-  } catch(e) {
-    autocomplete.innerHTML = `<div class="autocomplete-item" style="color:var(--text-3)">Kunne ikke hente resultater</div>`;
+  }catch(e){
+    autocomplete.innerHTML = `<div class="ac-item" style="color:var(--text3)">Kunne ikke hente resultater</div>`;
     autocomplete.classList.add('open');
   }
 }
 
-function showAutocomplete(places) {
-  if (!places.length) {
-    autocomplete.innerHTML = `<div class="autocomplete-item" style="color:var(--text-3)">Ingen byer fundet</div>`;
-    autocomplete.classList.add('open');
-    return;
+function showAutocomplete(places){
+  if(!places.length){
+    autocomplete.innerHTML = `<div class="ac-item" style="color:var(--text3)">Ingen byer fundet</div>`;
+    autocomplete.classList.add('open'); return;
   }
-  autocomplete.innerHTML = places.map((p, i) => {
+  autocomplete.innerHTML = places.map(p=>{
     const name = p.name;
     const region = [p.admin1, p.country].filter(Boolean).join(', ');
-    return `<div class="autocomplete-item" data-lat="${p.latitude}" data-lon="${p.longitude}" data-name="${name}" data-region="${region}" role="option" tabindex="0">
-      ${name}<small>${region}</small>
-    </div>`;
+    return `<div class="ac-item" data-lat="${p.latitude}" data-lon="${p.longitude}" data-name="${escHtml(name)}" data-region="${escHtml(region)}" role="option" tabindex="0">
+      ${escHtml(name)}<small>${escHtml(region)}</small></div>`;
   }).join('');
   autocomplete.classList.add('open');
-  autocomplete.querySelectorAll('.autocomplete-item').forEach(el => {
-    el.addEventListener('click', () => selectPlace(el));
-    el.addEventListener('keydown', e => { if (e.key === 'Enter') selectPlace(el); });
+  autocomplete.querySelectorAll('.ac-item').forEach(el=>{
+    el.addEventListener('click', ()=>selectPlace(el));
+    el.addEventListener('keydown', e=>{ if(e.key==='Enter') selectPlace(el); });
   });
 }
 
-function selectPlace(el) {
-  const loc = {
-    name: el.dataset.name,
-    region: el.dataset.region,
-    lat: parseFloat(el.dataset.lat),
-    lon: parseFloat(el.dataset.lon)
-  };
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function selectPlace(el){
+  const loc = { name:el.dataset.name, region:el.dataset.region, lat:parseFloat(el.dataset.lat), lon:parseFloat(el.dataset.lon) };
   autocomplete.classList.remove('open');
   searchInput.value = '';
   saveLocation(loc);
   loadWeather(loc);
 }
 
-// --- Weather ---
-function showLoading() {
-  app.innerHTML = `<div class="state-screen"><div class="spinner"></div><h2>Henter prognose…</h2><p>Trækker data fra ECMWF og Yr.no</p></div>`;
+// ── Loading / empty ──
+function showLoading(){
+  app.innerHTML = `<div class="state"><div class="spinner"></div><h2>Henter prognose…</h2><p>Trækker data fra ECMWF og Yr.no</p></div>`;
+}
+function showEmpty(){
+  app.innerHTML = `<div class="state">
+    <svg width="40" height="40" style="opacity:.25;margin-bottom:1rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+    <h2>Vælg en by</h2><p>Søg på et bynavn øverst for at se prognosen</p></div>`;
 }
 
-function showEmpty() {
-  app.innerHTML = `<div class="state-screen">
-    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
-    <h2>Vælg en by</h2>
-    <p>Søg på et bynavn øverst for at se langtidsprognosen</p>
-  </div>`;
-}
-
-async function loadWeather(loc) {
+// ── Fetch weather ──
+async function loadWeather(loc){
   showLoading();
-  try {
-    const [ecmwf, yr, climate] = await Promise.all([
+  try{
+    const [ec, yr, clim] = await Promise.all([
       fetchECMWF(loc.lat, loc.lon),
       fetchYr(loc.lat, loc.lon),
       fetchClimate(loc.lat, loc.lon)
     ]);
-    render(loc, ecmwf, yr, climate);
-  } catch(e) {
-    app.innerHTML = `<div class="state-screen"><h2>Noget gik galt</h2><p>${e.message || 'Prøv igen om lidt'}</p></div>`;
+    render(loc, ec, yr, clim);
+  }catch(e){
+    app.innerHTML = `<div class="state"><h2>Noget gik galt</h2><p>${e.message||'Prøv igen om lidt'}</p></div>`;
   }
 }
 
-async function fetchECMWF(lat, lon) {
+async function fetchECMWF(lat, lon){
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,weathercode&timezone=auto&forecast_days=16`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error('ECMWF data utilgængelig');
+  if(!res.ok) throw new Error('ECMWF utilgængelig');
   return res.json();
 }
 
-async function fetchYr(lat, lon) {
-  // Yr.no locationforecast
+async function fetchYr(lat, lon){
   const url = `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`;
-  const res = await fetch(url, { headers: { 'User-Agent': 'vejrmaaned-app/1.0 (kontakt@vejrmaaned.dk)' } });
-  if (!res.ok) throw new Error('Yr.no data utilgængelig');
+  const res = await fetch(url, { headers:{ 'User-Agent':'vejrmaaned/1.0' } });
+  if(!res.ok) throw new Error('Yr.no utilgængelig');
   return res.json();
 }
 
-async function fetchClimate(lat, lon) {
-  // Historical climate normals via Open-Meteo Climate API (1991-2020)
-  const now = new Date();
-  const month = now.getMonth() + 1;
-  const year = now.getFullYear();
-  const start = `${year}-${String(month).padStart(2,'0')}-01`;
-  const daysInMonth = new Date(year, month, 0).getDate();
-  const end = `${year}-${String(month).padStart(2,'0')}-${daysInMonth}`;
-  const url = `https://climate-api.open-meteo.com/v1/climate?latitude=${lat}&longitude=${lon}&start_date=${start}&end_date=${end}&models=CMIP6&daily=temperature_2m_mean,precipitation_sum`;
-  const res = await fetch(url);
-  if (!res.ok) return null;
-  return res.json();
+async function fetchClimate(lat, lon){
+  try{
+    const now = new Date();
+    const m = now.getMonth()+1;
+    const y = now.getFullYear();
+    const pad = n => String(n).padStart(2,'0');
+    const daysInMonth = new Date(y, m, 0).getDate();
+    const start = `${y}-${pad(m)}-01`;
+    const end   = `${y}-${pad(m)}-${daysInMonth}`;
+    const url = `https://climate-api.open-meteo.com/v1/climate?latitude=${lat}&longitude=${lon}&start_date=${start}&end_date=${end}&models=CMIP6&daily=temperature_2m_mean,precipitation_sum`;
+    const res = await fetch(url);
+    if(!res.ok) return null;
+    return res.json();
+  }catch{ return null; }
 }
 
-// --- Process Yr data into daily summaries ---
-function processYrDaily(yrData) {
-  const timeseries = yrData.properties.timeseries;
+// ── Process Yr into daily ──
+function yrToDailyMap(yrData){
+  const ts = yrData.properties.timeseries;
   const daily = {};
-  timeseries.forEach(entry => {
-    const date = entry.time.substring(0, 10);
-    const instant = entry.data.instant.details;
-    if (!daily[date]) daily[date] = { temps: [], precip: 0, symbols: [] };
-    if (instant.air_temperature !== undefined) daily[date].temps.push(instant.air_temperature);
-    const next1h = entry.data.next_1_hours;
-    if (next1h) {
-      daily[date].precip += next1h.details.precipitation_amount || 0;
-      if (next1h.summary.symbol_code) daily[date].symbols.push(next1h.summary.symbol_code);
+  ts.forEach(entry=>{
+    const date = entry.time.slice(0,10);
+    if(!daily[date]) daily[date]={ temps:[], precip:0, symbols:[] };
+    const t = entry.data.instant.details.air_temperature;
+    if(t != null) daily[date].temps.push(t);
+    const n1 = entry.data.next_1_hours;
+    if(n1){
+      daily[date].precip += n1.details.precipitation_amount||0;
+      if(n1.summary.symbol_code) daily[date].symbols.push(n1.summary.symbol_code);
     }
   });
-  return Object.entries(daily).slice(0, 10).map(([date, d]) => ({
-    date,
-    tmax: d.temps.length ? Math.max(...d.temps) : null,
-    tmin: d.temps.length ? Math.min(...d.temps) : null,
-    tmean: d.temps.length ? d.temps.reduce((a,b)=>a+b,0)/d.temps.length : null,
-    precip: d.precip,
-    symbol: d.symbols[Math.floor(d.symbols.length/2)] || 'cloudy'
-  }));
+  const result = {};
+  Object.entries(daily).slice(0,10).forEach(([date,d])=>{
+    result[date] = {
+      tmax: d.temps.length ? Math.max(...d.temps) : null,
+      tmin: d.temps.length ? Math.min(...d.temps) : null,
+      tmean: d.temps.length ? d.temps.reduce((a,b)=>a+b,0)/d.temps.length : null,
+      precip: d.precip,
+      symbol: d.symbols[Math.floor(d.symbols.length/2)]||'cloudy'
+    };
+  });
+  return result;
 }
 
-// --- Weather code to emoji ---
-function wmoIcon(code) {
-  if (code === 0) return '☀️';
-  if (code <= 2) return '🌤';
-  if (code === 3) return '☁️';
-  if (code <= 49) return '🌫';
-  if (code <= 59) return '🌧';
-  if (code <= 69) return '❄️';
-  if (code <= 79) return '🌨';
-  if (code <= 84) return '🌧';
-  if (code <= 99) return '⛈';
+// ── Icons ──
+function wmoIcon(c){
+  if(c===0) return '☀️';
+  if(c<=2) return '🌤';
+  if(c===3) return '☁️';
+  if(c<=49) return '🌫';
+  if(c<=59) return '🌧';
+  if(c<=69) return '❄️';
+  if(c<=79) return '🌨';
+  if(c<=84) return '🌧';
+  if(c<=99) return '⛈';
   return '🌡';
 }
-
-function yrIcon(symbol) {
-  if (!symbol) return '🌡';
-  if (symbol.includes('clearsky')) return '☀️';
-  if (symbol.includes('fair')) return '🌤';
-  if (symbol.includes('partlycloudy')) return '⛅';
-  if (symbol.includes('cloudy')) return '☁️';
-  if (symbol.includes('rain') && symbol.includes('thunder')) return '⛈';
-  if (symbol.includes('snow')) return '❄️';
-  if (symbol.includes('sleet')) return '🌨';
-  if (symbol.includes('rain')) return '🌧';
-  if (symbol.includes('fog')) return '🌫';
+function yrIcon(s){
+  if(!s) return '🌡';
+  if(s.includes('clearsky')) return '☀️';
+  if(s.includes('fair')) return '🌤';
+  if(s.includes('partlycloudy')) return '⛅';
+  if(s.includes('cloudy')) return '☁️';
+  if(s.includes('thunder')) return '⛈';
+  if(s.includes('snow')) return '❄️';
+  if(s.includes('sleet')) return '🌨';
+  if(s.includes('rain')) return '🌧';
+  if(s.includes('fog')) return '🌫';
   return '☁️';
 }
 
-// --- Group days into weeks ---
-function groupWeeks(days) {
-  const weeks = [];
-  for (let i = 0; i < days.length; i += 7) {
-    const chunk = days.slice(i, i+7);
-    if (!chunk.length) break;
-    const validTemps = chunk.filter(d => d.tmax != null && d.tmin != null);
-    weeks.push({
-      label: weeks.length === 0 ? 'Uge 1 (nu)' : `Uge ${weeks.length + 1}`,
-      tmax: validTemps.length ? Math.round(validTemps.reduce((s,d)=>s+d.tmax,0)/validTemps.length) : null,
-      tmin: validTemps.length ? Math.round(validTemps.reduce((s,d)=>s+d.tmin,0)/validTemps.length) : null,
-      tmean: validTemps.length ? (validTemps.reduce((s,d)=>s+d.tmax,0)/validTemps.length + validTemps.reduce((s,d)=>s+d.tmin,0)/validTemps.length) / 2 : null,
-      precip: Math.round(chunk.reduce((s,d)=>s+(d.precip||0),0)),
-      icon: wmoIcon(chunk[Math.floor(chunk.length/2)]?.weathercode || 3),
-      now: weeks.length === 0
-    });
-  }
-  return weeks;
+function dayName(dateStr, short=false){
+  const d = new Date(dateStr+'T12:00:00');
+  return d.toLocaleDateString('da-DK',{weekday:short?'short':'long'});
 }
+function fmt1(n){ return n!=null ? n.toFixed(1) : '–'; }
+function fmtR(n){ return n!=null ? Math.round(n)+'°' : '–'; }
+function agree(a,b,threshold){ return (a!=null&&b!=null) ? Math.abs(a-b)<=threshold : null; }
 
-function monthName(idx) {
-  return ['januar','februar','marts','april','maj','juni','juli','august','september','oktober','november','december'][idx];
-}
+const MONTHS = ['januar','februar','marts','april','maj','juni','juli','august','september','oktober','november','december'];
 
-function delta(val, norm, unit='°') {
-  if (norm == null || val == null) return '';
-  const diff = val - norm;
-  const sign = diff > 0 ? '+' : '';
-  const cls = diff > 0.3 ? 'delta-up' : diff < -0.3 ? 'delta-down' : 'delta-neutral';
-  return `<span class="metric-delta ${cls}">${sign}${diff.toFixed(1)}${unit} ift. norm</span>`;
-}
-
-// --- Render ---
-function render(loc, ecmwf, yrRaw, climate) {
+// ── Render ──
+function render(loc, ec, yrRaw, clim){
   const now = new Date();
-  const monthIdx = now.getMonth();
-  const mname = monthName(monthIdx);
+  const mname = MONTHS[now.getMonth()];
+  const todayStr = now.toISOString().slice(0,10);
 
-  // ECMWF days
-  const ecDays = ecmwf.daily.time.map((date, i) => ({
+  // ECMWF days array
+  const ecDays = ec.daily.time.map((date,i)=>({
     date,
-    tmax: ecmwf.daily.temperature_2m_max[i],
-    tmin: ecmwf.daily.temperature_2m_min[i],
-    precip: ecmwf.daily.precipitation_sum[i] || 0,
-    weathercode: ecmwf.daily.weathercode[i]
+    tmax: ec.daily.temperature_2m_max[i],
+    tmin: ec.daily.temperature_2m_min[i],
+    tmean: (ec.daily.temperature_2m_max[i]+ec.daily.temperature_2m_min[i])/2,
+    precip: ec.daily.precipitation_sum[i]||0,
+    wcode: ec.daily.weathercode[i]
   }));
 
-  // Yr days
-  const yrDays = processYrDaily(yrRaw);
+  // Yr map by date
+  const yrMap = yrToDailyMap(yrRaw);
 
-  // Averages ECMWF (16 days)
-  const ecTemps = ecDays.map(d => (d.tmax + d.tmin) / 2);
-  const ecMean = ecTemps.reduce((a,b)=>a+b,0) / ecTemps.length;
-  const ecPrecip = ecDays.reduce((s,d)=>s+(d.precip||0),0);
+  // ── 7-dages dagskort ──
+  const sevenDays = ecDays.slice(0,7);
 
-  // Averages Yr (up to 10 days)
-  const yrValid = yrDays.filter(d => d.tmean != null);
-  const yrMean = yrValid.length ? yrValid.reduce((s,d)=>s+d.tmean,0)/yrValid.length : null;
-  const yrPrecip = yrDays.reduce((s,d)=>s+d.precip,0);
-
-  // Combined
-  const combinedTemp = yrMean != null ? (ecMean * 0.6 + yrMean * 0.4) : ecMean;
-  const combinedPrecip = yrMean != null ? (ecPrecip * 0.6 + yrPrecip * 0.4) : ecPrecip;
+  // ── Ugekort: uge 1–4 fra dag 0 ──
+  const weekBlocks = [0,7,14,21].map((start,wi)=>{
+    const chunk = ecDays.slice(start, start+7).filter(d=>d.tmax!=null);
+    if(!chunk.length) return null;
+    const yrChunk = chunk.map(d=>yrMap[d.date]).filter(Boolean);
+    const ecTmean = chunk.reduce((s,d)=>s+d.tmean,0)/chunk.length;
+    const ecTmax  = Math.max(...chunk.map(d=>d.tmax));
+    const ecTmin  = Math.min(...chunk.map(d=>d.tmin));
+    const ecPrecip= chunk.reduce((s,d)=>s+d.precip,0);
+    const yrTmean = yrChunk.length ? yrChunk.reduce((s,d)=>s+(d.tmean||0),0)/yrChunk.length : null;
+    const yrPrecip= yrChunk.length ? yrChunk.reduce((s,d)=>s+d.precip,0) : null;
+    const midDay  = chunk[Math.floor(chunk.length/2)];
+    // Date range label
+    const startD  = new Date(chunk[0].date+'T12:00:00');
+    const endD    = new Date(chunk[chunk.length-1].date+'T12:00:00');
+    const rangeLabel = `${startD.getDate()}. – ${endD.getDate()}. ${MONTHS[endD.getMonth()].slice(0,3)}`;
+    const tAgree  = agree(ecTmean, yrTmean, 2);
+    const pAgree  = agree(ecPrecip, yrPrecip, 15);
+    return { wi, rangeLabel, ecTmean, ecTmax, ecTmin, ecPrecip, yrTmean, yrPrecip, tAgree, pAgree, icon:wmoIcon(midDay.wcode) };
+  }).filter(Boolean);
 
   // Climate normals
-  let normTemp = null, normPrecip = null;
-  if (climate && climate.daily) {
-    const ct = climate.daily.temperature_2m_mean.filter(v=>v!=null);
-    const cp = climate.daily.precipitation_sum.filter(v=>v!=null);
-    if (ct.length) normTemp = ct.reduce((a,b)=>a+b,0)/ct.length;
-    if (cp.length) normPrecip = cp.reduce((a,b)=>a+b,0);
+  let normTemp=null, normPrecip=null;
+  if(clim&&clim.daily){
+    const ct=clim.daily.temperature_2m_mean.filter(v=>v!=null);
+    const cp=clim.daily.precipitation_sum.filter(v=>v!=null);
+    if(ct.length) normTemp=ct.reduce((a,b)=>a+b,0)/ct.length;
+    if(cp.length) normPrecip=cp.reduce((a,b)=>a+b,0);
   }
 
-  // Verdict
-  const tempDiff = normTemp != null ? combinedTemp - normTemp : null;
-  let verdictIcon = '🌤', verdictMain = 'Omskifteligt vejr', verdictDetail = '';
-  if (tempDiff != null) {
-    if (tempDiff > 2) { verdictIcon = '☀️'; verdictMain = 'Markant varmere end normalt'; }
-    else if (tempDiff > 0.5) { verdictIcon = '🌤'; verdictMain = 'Lidt varmere end normalt'; }
-    else if (tempDiff < -2) { verdictIcon = '❄️'; verdictMain = 'Markant koldere end normalt'; }
-    else if (tempDiff < -0.5) { verdictIcon = '🌥'; verdictMain = 'Lidt koldere end normalt'; }
-    else { verdictIcon = '☁️'; verdictMain = 'Tæt på normalen'; }
-  }
-  const precipDiff = normPrecip != null ? combinedPrecip - normPrecip : null;
-  if (precipDiff != null) {
-    verdictDetail = precipDiff > 10 ? 'Mere nedbør end normalt' :
-                   precipDiff < -10 ? 'Mindre nedbør end normalt' : 'Nedbør tæt på normalen';
-  }
-
-  // Weeks (from ECMWF since it has 16 days)
-  const weeks = groupWeeks(ecDays);
-
-  // Agreement between sources (for temp)
-  const tempAgree = yrMean != null ? Math.abs(ecMean - yrMean) < 2 : null;
-  const precipAgree = yrMean != null ? Math.abs(ecPrecip - yrPrecip) < 15 : null;
-
-  // Chart data (ECMWF daily means)
-  const chartTemps = ecDays.map(d => (d.tmax + d.tmin) / 2);
+  // Chart data
+  const chartTemps = ecDays.map(d=>d.tmean);
+  const chartDates = ecDays.map(d=>d.date);
 
   app.innerHTML = `
-    <div class="animate">
-      <div class="location-badge">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 13-8 13s-8-7-8-13a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-        ${loc.name}${loc.region ? ', ' + loc.region.split(',')[0] : ''}
-      </div>
-      <div class="period-title">Prognose for ${mname}</div>
-      <div class="period-sub">Baseret på ECMWF (16 dage) og Yr.no (10 dage) · ${new Date().toLocaleDateString('da-DK', {day:'numeric',month:'long'})}</div>
-    </div>
+<!-- Location / title -->
+<div class="a1">
+  <div class="loc-line">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="opacity:.5"><path d="M20 10c0 6-8 13-8 13s-8-7-8-13a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+    ${escHtml(loc.name)}${loc.region?', '+escHtml(loc.region.split(',')[0]):''}
+  </div>
+  <div class="page-title">Vejrudsigt — ${mname} ${now.getFullYear()}</div>
+  <div class="page-sub">Opdateret ${now.toLocaleDateString('da-DK',{day:'numeric',month:'long',year:'numeric'})}</div>
+</div>
 
-    <div class="verdict animate-2">
-      <div class="verdict-icon">${verdictIcon}</div>
-      <div>
-        <div class="verdict-label">Månedsvurdering</div>
-        <div class="verdict-main">${verdictMain}</div>
-        <div class="verdict-detail">${verdictDetail}</div>
-      </div>
+<!-- ── 7 dages dagskort ── -->
+<div class="a2">
+  <div class="sec-head">
+    <div class="sec-title">De næste 7 dage</div>
+    <div class="sec-badges">
+      <span class="badge b-ec">ECMWF</span>
+      <span class="badge b-yr">Yr.no</span>
     </div>
-
-    <div class="metrics-grid animate-3">
-      <div class="metric-card">
-        <div class="metric-label">Middeltemp.</div>
-        <div class="metric-value">${combinedTemp.toFixed(1)}°</div>
-        ${delta(combinedTemp, normTemp)}
-        <div class="source-badges">
-          <span class="badge badge-ecmwf">ECMWF ${ecMean.toFixed(1)}°</span>
-          ${yrMean != null ? `<span class="badge badge-yr">Yr ${yrMean.toFixed(1)}°</span>` : ''}
-        </div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Nedbør</div>
-        <div class="metric-value">${Math.round(combinedPrecip)} mm</div>
-        ${delta(Math.round(combinedPrecip), normPrecip != null ? Math.round(normPrecip) : null, ' mm')}
-        <div class="source-badges">
-          <span class="badge badge-ecmwf">ECMWF ${Math.round(ecPrecip)} mm</span>
-          ${yrMean != null ? `<span class="badge badge-yr">Yr ${Math.round(yrPrecip)} mm</span>` : ''}
-        </div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Dataperiode</div>
-        <div class="metric-value" style="font-size:18px">16 dg</div>
-        <div class="source-badges" style="margin-top:8px">
-          <span class="badge badge-ecmwf">ECMWF</span>
-          <span class="badge badge-yr">Yr.no</span>
-          ${normTemp != null ? '<span class="badge badge-avg">Norm</span>' : ''}
-        </div>
-      </div>
-    </div>
-
-    <div class="animate-3">
-      <div class="section-title">Uge for uge (ECMWF)</div>
-      <div class="weeks-grid">
-        ${weeks.map(w => `
-          <div class="week-card${w.now?' now':''}">
-            <div class="week-label">${w.label}</div>
-            <span class="week-icon">${w.icon}</span>
-            <div class="week-temp">${w.tmean != null ? Math.round(w.tmean)+'°' : '–'}</div>
-            <div class="week-range">${w.tmin != null ? w.tmin+'° – '+w.tmax+'°' : ''}</div>
-            <div class="week-rain">${w.precip} mm</div>
+  </div>
+  <div class="days-scroll">
+    <div class="days-grid">
+      ${sevenDays.map(d=>{
+        const yr = yrMap[d.date];
+        const isToday = d.date===todayStr;
+        const tAgreeDay = yr ? agree(d.tmean, yr.tmean, 2) : null;
+        const ecIcon = wmoIcon(d.wcode);
+        const yrIconStr = yr ? yrIcon(yr.symbol) : null;
+        const showIcon = yrIconStr && yrIconStr!==ecIcon ? `<span style="font-size:11px;opacity:.6">${yrIconStr}</span>` : '';
+        const dotClass = tAgreeDay===true?'yes':tAgreeDay===false?'no':'';
+        return `<div class="day-card${isToday?' today':''}">
+          ${dotClass?`<div class="agree-dot ${dotClass}" title="${tAgreeDay?'Kilderne er enige':'Kilderne er uenige'}"></div>`:''}
+          <div class="day-name">${isToday?'I dag':dayName(d.date,true)}</div>
+          <span class="day-icon">${ecIcon}${showIcon}</span>
+          <div class="day-tmax">${fmtR(d.tmax)}</div>
+          <div class="day-tmin">${fmtR(d.tmin)}</div>
+          <div class="day-precip">${d.precip.toFixed(1)} mm</div>
+          <div class="day-sources">
+            <span class="day-src ec">EC ${fmt1(d.tmean)}°</span>
+            ${yr?`<span class="day-src yr">Yr ${fmt1(yr.tmean)}°</span>`:''}
           </div>
-        `).join('')}
-      </div>
+        </div>`;
+      }).join('')}
     </div>
+  </div>
+</div>
 
-    <div class="animate-4">
-      <div class="section-title">Temperaturkurve (16 dage)</div>
-      <div class="chart-card">
-        <div class="chart-header">
-          <div style="font-size:12px;color:var(--text-3)">${ecDays[0]?.date} → ${ecDays[ecDays.length-1]?.date}</div>
-          <div class="chart-legend">
-            <div class="legend-item"><div class="legend-dot" style="background:#1a5ccc"></div>ECMWF</div>
-            ${normTemp != null ? `<div class="legend-item"><div class="legend-dot" style="background:#9e9e97"></div>Normal</div>` : ''}
+<!-- ── Temperaturkurve ── -->
+<div class="a3">
+  <div class="sec-head">
+    <div class="sec-title">Temperaturtendens — 16 dage</div>
+    <div class="chart-leg">
+      <div class="leg-item"><div class="leg-dot" style="background:#1a5ccc"></div>ECMWF</div>
+      ${normTemp!=null?`<div class="leg-item"><div class="leg-dot" style="background:#9e9e97"></div>Normal</div>`:''}
+    </div>
+  </div>
+  <div class="chart-card" style="padding-top:.75rem">
+    <canvas id="tempChart" aria-label="Temperaturkurve 16 dage"></canvas>
+  </div>
+</div>
+
+<!-- ── 4 uger langtidsprognose ── -->
+<div class="a4">
+  <div class="sec-head">
+    <div class="sec-title">De kommende 4 uger</div>
+    <div class="sec-badges">
+      <span class="badge b-ec">ECMWF · 16 dg</span>
+      <span class="badge b-yr">Yr.no · 10 dg</span>
+    </div>
+  </div>
+  <div class="weeks-grid">
+    ${weekBlocks.map((w,i)=>{
+      const tAgreeCls = w.tAgree===true?'b-agree':w.tAgree===false?'b-disagree':'b-avg';
+      const tAgreeLabel = w.tAgree===true?'Enige om temp.':w.tAgree===false?'Uenige om temp.':'Kun ECMWF';
+      const yrRow = w.yrTmean!=null ? `
+        <div class="week-src yr">
+          <span>Yr.no</span>
+          <span class="src-val">${fmt1(w.yrTmean)}° · ${w.yrPrecip!=null?Math.round(w.yrPrecip)+' mm':'–'}</span>
+        </div>` : '';
+      const normDiff = normTemp!=null ? (w.ecTmean-normTemp) : null;
+      const normStr = normDiff!=null ? (normDiff>0.3?`+${normDiff.toFixed(1)}° ift norm`:normDiff<-0.3?`${normDiff.toFixed(1)}° ift norm`:`≈ normalt`) : '';
+      return `<div class="week-card">
+        <div class="week-label">Uge ${i+1} · ${w.rangeLabel}</div>
+        <span class="week-icon">${w.icon}</span>
+        <div class="week-trange">${Math.round(w.ecTmin)}° – ${Math.round(w.ecTmax)}°</div>
+        <div class="week-precip">${Math.round(w.ecPrecip)} mm${normStr?' · '+normStr:''}</div>
+        <div class="week-src-row">
+          <div class="week-src ec">
+            <span>ECMWF</span>
+            <span class="src-val">${fmt1(w.ecTmean)}° · ${Math.round(w.ecPrecip)} mm</span>
           </div>
+          ${yrRow}
         </div>
-        <canvas id="tempChart" aria-label="Temperaturkurve"></canvas>
-      </div>
-    </div>
+        ${w.yrTmean!=null?`<span class="week-agree badge ${tAgreeCls}">${tAgreeLabel}</span>`:''}
+      </div>`;
+    }).join('')}
+  </div>
+</div>
 
-    ${tempAgree !== null ? `
-    <div class="animate-4">
-      <div class="section-title">Kilderne sammenlignet</div>
-      <div class="comparison-card">
-        <div class="comparison-row">
-          <span class="comparison-label">Middeltemperatur</span>
-          <span class="comparison-val val-ecmwf">${ecMean.toFixed(1)}°</span>
-          <span class="comparison-val val-yr">${yrMean != null ? yrMean.toFixed(1)+'°' : '–'}</span>
-          <span class="comparison-agree ${tempAgree?'agree-yes':'agree-no'}">${tempAgree?'Enige':'Uenige'}</span>
-        </div>
-        <div class="comparison-row">
-          <span class="comparison-label">Nedbør (ens periode)</span>
-          <span class="comparison-val val-ecmwf">${Math.round(ecPrecip)} mm</span>
-          <span class="comparison-val val-yr">${Math.round(yrPrecip)} mm</span>
-          <span class="comparison-agree ${precipAgree?'agree-yes':'agree-no'}">${precipAgree?'Enige':'Uenige'}</span>
-        </div>
-        <div class="comparison-row" style="border:none;padding-bottom:0">
-          <span class="comparison-label">Periode</span>
-          <span class="comparison-val" style="color:var(--blue-text);font-size:12px">16 dage</span>
-          <span class="comparison-val" style="color:var(--green-text);font-size:12px">10 dage</span>
-          <span></span>
-        </div>
-      </div>
-    </div>` : ''}
+<div class="disclaimer a5">
+  Grøn prik = kilderne er enige (±2°). Orange prik = uenige. Langtidsprognoser er vejledende — usikkerheden stiger markant ud over 7 dage.
+  Klimanormaler: CMIP6 1991–2020. Datakilder: <a href="https://open-meteo.com" target="_blank">open-meteo.com</a> · <a href="https://api.met.no" target="_blank">api.met.no (Yr.no)</a>
+</div>`;
 
-    <div class="disclaimer animate-5">
-      Langtidsprognoser er vejledende. Usikkerheden stiger betydeligt ud over 7 dage. Tal er et blended gennemsnit af ECMWF (60%) og Yr.no (40%) for overlappende periode, ECMWF alene herefter. Klimanormaler fra Open-Meteo Climate API (CMIP6 1991–2020). <br>
-      Kilder: <a href="https://open-meteo.com" target="_blank">open-meteo.com</a> · <a href="https://api.met.no" target="_blank">api.met.no (Yr.no)</a>
-    </div>
-  `;
-
-  // Draw chart after render
-  requestAnimationFrame(() => drawChart(chartTemps, ecDays.map(d=>d.date), normTemp));
+  requestAnimationFrame(()=>drawChart(chartTemps, chartDates, normTemp));
 }
 
-function drawChart(temps, dates, normTemp) {
+// ── Canvas chart ──
+function drawChart(temps, dates, normTemp){
   const canvas = document.getElementById('tempChart');
-  if (!canvas) return;
+  if(!canvas) return;
   const ctx = canvas.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
+  const dpr = window.devicePixelRatio||1;
   const w = canvas.offsetWidth;
-  const h = 120;
-  canvas.width = w * dpr;
-  canvas.height = h * dpr;
-  canvas.style.width = w + 'px';
-  canvas.style.height = h + 'px';
+  const h = 130;
+  canvas.width = w*dpr; canvas.height = h*dpr;
+  canvas.style.width = w+'px'; canvas.style.height = h+'px';
   ctx.scale(dpr, dpr);
 
-  const pad = { top: 12, right: 12, bottom: 24, left: 28 };
-  const cw = w - pad.left - pad.right;
-  const ch = h - pad.top - pad.bottom;
+  const pad = {top:12,right:12,bottom:26,left:30};
+  const cw = w-pad.left-pad.right;
+  const ch = h-pad.top-pad.bottom;
+  const valid = temps.filter(v=>v!=null);
+  if(!valid.length) return;
+  const allV = [...valid]; if(normTemp!=null) allV.push(normTemp);
+  const minV = Math.min(...allV)-2;
+  const maxV = Math.max(...allV)+2;
+  const xs = i => pad.left+(i/(temps.length-1))*cw;
+  const ys = v => pad.top+ch-((v-minV)/(maxV-minV))*ch;
 
-  const allVals = [...temps];
-  if (normTemp != null) allVals.push(normTemp);
-  const min = Math.min(...allVals) - 2;
-  const max = Math.max(...allVals) + 2;
+  // grid
+  ctx.strokeStyle='rgba(0,0,0,0.05)'; ctx.lineWidth=1;
+  [0,.33,.66,1].forEach(t=>{ const y=pad.top+t*ch; ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(pad.left+cw,y); ctx.stroke(); });
 
-  const xScale = i => pad.left + (i / (temps.length - 1)) * cw;
-  const yScale = v => pad.top + ch - ((v - min) / (max - min)) * ch;
+  // week dividers
+  ctx.strokeStyle='rgba(0,0,0,0.08)'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+  [7,14].forEach(i=>{ if(i<temps.length){ const x=xs(i); ctx.beginPath(); ctx.moveTo(x,pad.top); ctx.lineTo(x,pad.top+ch); ctx.stroke(); } });
+  ctx.setLineDash([]);
 
-  const style = getComputedStyle(document.documentElement);
-  const textColor = 'rgba(120,120,110,0.8)';
-
-  // Grid lines
-  ctx.strokeStyle = 'rgba(0,0,0,0.06)';
-  ctx.lineWidth = 1;
-  [0, 0.5, 1].forEach(t => {
-    const y = pad.top + t * ch;
-    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cw, y); ctx.stroke();
-  });
-
-  // Normal line
-  if (normTemp != null) {
-    const ny = yScale(normTemp);
-    ctx.strokeStyle = 'rgba(158,158,151,0.5)';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([4, 4]);
-    ctx.beginPath(); ctx.moveTo(pad.left, ny); ctx.lineTo(pad.left + cw, ny); ctx.stroke();
+  // normal line
+  if(normTemp!=null){
+    const ny=ys(normTemp);
+    ctx.strokeStyle='rgba(158,158,151,.45)'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(pad.left,ny); ctx.lineTo(pad.left+cw,ny); ctx.stroke();
     ctx.setLineDash([]);
+    ctx.fillStyle='rgba(120,120,110,.6)'; ctx.font='9px DM Mono,monospace'; ctx.textAlign='left';
+    ctx.fillText('norm',pad.left+2,ny-3);
   }
 
-  // Fill under line
+  // fill
   ctx.beginPath();
-  temps.forEach((v, i) => { i === 0 ? ctx.moveTo(xScale(i), yScale(v)) : ctx.lineTo(xScale(i), yScale(v)); });
-  ctx.lineTo(xScale(temps.length-1), pad.top + ch);
-  ctx.lineTo(xScale(0), pad.top + ch);
-  ctx.closePath();
-  ctx.fillStyle = 'rgba(26,92,204,0.06)';
-  ctx.fill();
+  temps.forEach((v,i)=>{ if(v==null) return; i===0||temps.slice(0,i).every(x=>x==null)?ctx.moveTo(xs(i),ys(v)):ctx.lineTo(xs(i),ys(v)); });
+  ctx.lineTo(xs(temps.length-1),pad.top+ch); ctx.lineTo(xs(0),pad.top+ch); ctx.closePath();
+  ctx.fillStyle='rgba(26,92,204,.07)'; ctx.fill();
 
-  // Main line
-  ctx.beginPath();
-  ctx.strokeStyle = '#1a5ccc';
-  ctx.lineWidth = 2;
-  ctx.lineJoin = 'round';
-  ctx.lineCap = 'round';
-  temps.forEach((v, i) => { i === 0 ? ctx.moveTo(xScale(i), yScale(v)) : ctx.lineTo(xScale(i), yScale(v)); });
+  // line
+  ctx.beginPath(); ctx.strokeStyle='#1a5ccc'; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.lineCap='round';
+  let first=true;
+  temps.forEach((v,i)=>{ if(v==null) return; if(first){ctx.moveTo(xs(i),ys(v));first=false;}else ctx.lineTo(xs(i),ys(v)); });
   ctx.stroke();
 
-  // Dots at week boundaries
-  [0, 6, 13, temps.length-1].forEach(i => {
-    if (i >= temps.length) return;
-    ctx.beginPath();
-    ctx.arc(xScale(i), yScale(temps[i]), 3, 0, Math.PI * 2);
-    ctx.fillStyle = '#1a5ccc';
-    ctx.fill();
-  });
+  // week boundary dots
+  [0,6,13,temps.length-1].forEach(i=>{ if(i<temps.length&&temps[i]!=null){ ctx.beginPath(); ctx.arc(xs(i),ys(temps[i]),3,0,Math.PI*2); ctx.fillStyle='#1a5ccc'; ctx.fill(); } });
 
-  // Y axis labels
-  ctx.fillStyle = textColor;
-  ctx.font = '10px DM Mono, monospace';
-  ctx.textAlign = 'right';
-  [Math.round(min+1), Math.round((min+max)/2), Math.round(max-1)].forEach(v => {
-    ctx.fillText(v+'°', pad.left - 4, yScale(v) + 3);
-  });
+  // Y labels
+  ctx.fillStyle='rgba(100,100,95,.7)'; ctx.font='10px DM Mono,monospace'; ctx.textAlign='right';
+  [Math.round(minV+1),Math.round((minV+maxV)/2),Math.round(maxV-1)].forEach(v=>{ ctx.fillText(v+'°',pad.left-4,ys(v)+3); });
 
-  // X axis labels
-  ctx.textAlign = 'center';
-  ctx.font = '10px DM Sans, sans-serif';
-  const labelIndices = [0, Math.floor(temps.length/2), temps.length-1];
-  labelIndices.forEach(i => {
-    if (i >= dates.length) return;
-    const d = new Date(dates[i]);
-    const label = d.toLocaleDateString('da-DK', {day:'numeric', month:'short'});
-    ctx.fillText(label, xScale(i), h - 6);
+  // X labels (dates at week marks)
+  ctx.textAlign='center'; ctx.font='10px DM Sans,sans-serif';
+  [0,7,13].filter(i=>i<dates.length).forEach(i=>{
+    const d=new Date(dates[i]+'T12:00:00');
+    ctx.fillText(d.toLocaleDateString('da-DK',{day:'numeric',month:'short'}),xs(i),h-6);
   });
 }
 
-// --- Init ---
+// ── Init ──
 const saved = loadLocation();
-if (saved) {
-  searchInput.placeholder = saved.name;
-  loadWeather(saved);
-} else {
-  showEmpty();
-}
+if(saved){ searchInput.placeholder=saved.name; loadWeather(saved); }
+else showEmpty();
 </script>
 </body>
 </html>
