@@ -99,6 +99,13 @@ header{display:flex;align-items:center;justify-content:space-between;padding:1.2
 .agree-dot.no{background:#b35a00}
 
 /* ── Dag-detalje panel ── */
+.dd-precip-compare{display:flex;gap:12px;align-items:flex-end;margin-bottom:.15rem}
+.dd-precip-src{flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.dd-precip-bar-wrap{width:100%;height:18px;background:var(--surface2);border-radius:4px;overflow:hidden;position:relative}
+.dd-precip-bar{height:100%;border-radius:4px;width:0%;transition:width .5s ease}
+.dd-precip-bar.ec-bar{background:linear-gradient(90deg,#a8caef,#2d6ed6)}
+.dd-precip-bar.yr-bar{background:linear-gradient(90deg,#b8e8cc,#1a7a4a)}
+.dd-precip-num{font-size:13px;font-weight:500;font-family:'DM Mono',monospace;color:var(--text)}
 .day-detail{background:var(--surface);border:1px solid var(--blue-border);border-radius:var(--rlg);padding:1rem 1.1rem;margin-bottom:1.25rem;overflow:hidden;max-height:0;opacity:0;transition:max-height .35s ease, opacity .25s ease, padding .25s ease}
 .day-detail.open{max-height:400px;opacity:1}
 .dd-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem}
@@ -373,6 +380,7 @@ function yrToHourlyMap(yrData){
       hour,
       temp: det.air_temperature??null,
       wind: det.wind_speed??null,
+      windDir: det.wind_from_direction??null,
       humid: det.relative_humidity??null,
       precip: n1?.details?.precipitation_amount??0,
       feels: det.air_temperature!=null&&det.wind_speed!=null
@@ -660,7 +668,7 @@ function render(loc, ec, yrRaw, clim, gfsRaw, ec46Raw){
       const ec = ecDays[di];
       const yr = yrMap[date];
       const hours = yrHourly[date]||[];
-      openDayDetail(detailEl, date, ec, yr, hours, normTemp);
+      openDayDetail(detailEl, date, ec, yr, hours);
     };
     card.addEventListener('click', activate);
     card.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' ') activate(); });
@@ -850,145 +858,188 @@ function drawChart(temps, dates, normTemp){
 }
 
 // ── Dag-detalje panel ──
-function openDayDetail(el, date, ec, yr, hours, normTemp){
+function openDayDetail(el, date, ec, yr, hours){
   const d = new Date(date+'T12:00:00');
   const dagNavn = d.toLocaleDateString('da-DK',{weekday:'long',day:'numeric',month:'long'});
 
-  // Vindretning
-  const windDesc = (spd)=>{
+  // Vind aggregering fra Yr timedata
+  const validH = hours.filter(h=>h.temp!=null);
+  const avgWind = validH.length ? validH.reduce((s,h)=>s+(h.wind||0),0)/validH.length : null;
+  const avgWindDir = validH.length ? validH.reduce((s,h)=>s+(h.windDir||0),0)/validH.length : null;
+  const maxWind = validH.length ? Math.max(...validH.map(h=>h.wind||0)) : null;
+  const avgHumid = validH.length ? Math.round(validH.reduce((s,h)=>s+(h.humid||0),0)/validH.length) : null;
+
+  const windDesc = spd => {
     if(spd==null) return '–';
-    if(spd<2) return 'Stille';
-    if(spd<6) return 'Svag';
+    if(spd<2)  return 'Stille';
+    if(spd<6)  return 'Svag';
     if(spd<11) return 'Let';
     if(spd<17) return 'Jævn';
     if(spd<24) return 'Frisk';
-    return 'Hård';
+    if(spd<32) return 'Hård';
+    return 'Storm';
   };
 
-  // Aggreger fra timedata
-  const validH = hours.filter(h=>h.temp!=null);
-  const avgWind = validH.length ? validH.reduce((s,h)=>s+(h.wind||0),0)/validH.length : null;
-  const avgHumid = validH.length ? validH.reduce((s,h)=>s+(h.humid||0),0)/validH.length : null;
-  const totalPrecip = hours.reduce((s,h)=>s+h.precip,0);
-  const feelsAs = validH.length ? validH[Math.floor(validH.length/2)].feels : null;
+  // Nedbør sammenligning
+  const yrPrecip  = yr ? yr.precip : null;
+  const ecPrecip  = ec.precip;
+  const precipAgree = yrPrecip!=null ? Math.abs(ecPrecip-yrPrecip)<3 : null;
+  const precipDiff  = yrPrecip!=null ? (yrPrecip-ecPrecip) : null;
 
-  // Enighed
-  const tAgree = yr&&ec ? agree(ec.tmean, yr.tmean, 2) : null;
-  const agreeBadge = tAgree===true
-    ? '<span class="dd-src-pill b-agree">Kilderne er enige om temperaturen</span>'
-    : tAgree===false
-    ? '<span class="dd-src-pill b-disagree">Kilderne er uenige om temperaturen</span>'
+  const precipBadge = precipAgree===true
+    ? '<span class="dd-src-pill b-agree">Kilderne er enige om nedbør</span>'
+    : precipAgree===false
+    ? '<span class="dd-src-pill b-disagree">Kilderne er uenige om nedbør ('
+      +(precipDiff>0?'+':'')+precipDiff.toFixed(1)+' mm forskel)</span>'
     : '';
 
-  el.innerHTML = `
-    <div class="dd-head">
-      <div class="dd-title">${dagNavn.charAt(0).toUpperCase()+dagNavn.slice(1)}</div>
-      <button class="dd-close" aria-label="Luk">×</button>
-    </div>
-    <div class="dd-stats">
-      <div class="dd-stat">
-        <div class="dd-stat-label">Maks</div>
-        <div class="dd-stat-val">${ec.tmax!=null?Math.round(ec.tmax)+'°':'–'}</div>
-      </div>
-      <div class="dd-stat">
-        <div class="dd-stat-label">Min</div>
-        <div class="dd-stat-val">${ec.tmin!=null?Math.round(ec.tmin)+'°':'–'}</div>
-      </div>
-      <div class="dd-stat">
-        <div class="dd-stat-label">Føles som</div>
-        <div class="dd-stat-val">${feelsAs!=null?feelsAs+'°':'–'}</div>
-      </div>
-      <div class="dd-stat">
-        <div class="dd-stat-label">Vind</div>
-        <div class="dd-stat-val" style="font-size:12px">${avgWind!=null?windDesc(avgWind)+' '+Math.round(avgWind)+' m/s':'–'}</div>
-      </div>
-      <div class="dd-stat">
-        <div class="dd-stat-label">Nedbør</div>
-        <div class="dd-stat-val">${(yr?yr.precip:ec.precip).toFixed(1)} mm</div>
-      </div>
-      <div class="dd-stat">
-        <div class="dd-stat-label">Luftfugt.</div>
-        <div class="dd-stat-val">${avgHumid!=null?Math.round(avgHumid)+'%':'–'}</div>
-      </div>
-      <div class="dd-stat">
-        <div class="dd-stat-label">ECMWF</div>
-        <div class="dd-stat-val">${ec.tmean!=null?fmt1(ec.tmean)+'°':'–'}</div>
-      </div>
-      <div class="dd-stat">
-        <div class="dd-stat-label">Yr.no</div>
-        <div class="dd-stat-val">${yr&&yr.tmean!=null?fmt1(yr.tmean)+'°':'–'}</div>
-      </div>
-    </div>
-    ${hours.length>2?`<div class="dd-chart-label">Temperatur time for time (Yr.no)</div><canvas id="ddCanvas" aria-label="Timetemperatur"></canvas>`:''}
-    <div class="dd-sources">${agreeBadge}</div>`;
+  // Vindpil SVG (roterer efter retning)
+  function windArrowSVG(deg, spd){
+    if(spd==null||spd<0.5) return '<span style="font-size:18px;opacity:.4">〇</span>';
+    const col = spd<6?'#2d6ed6':spd<14?'#f5a623':'#c0392b';
+    return '<svg width="22" height="22" viewBox="0 0 24 24" style="transform:rotate('+deg+'deg);display:inline-block;vertical-align:middle">'
+      +'<path d="M12 3 L16 18 L12 14 L8 18 Z" fill="'+col+'" stroke="none"/>'
+      +'</svg>';
+  }
+
+  el.innerHTML =
+    '<div class="dd-head">'
+      +'<div class="dd-title">'+dagNavn.charAt(0).toUpperCase()+dagNavn.slice(1)+'</div>'
+      +'<button class="dd-close" aria-label="Luk">×</button>'
+    +'</div>'
+
+    // Nedbør sektion
+    +'<div class="dd-chart-label" style="margin-bottom:.5rem">Nedbør over døgnet</div>'
+    +'<div class="dd-precip-compare">'
+      +'<div class="dd-precip-src">'
+        +'<span class="badge b-ec" style="margin-bottom:4px">ECMWF</span>'
+        +'<div class="dd-precip-bar-wrap"><div class="dd-precip-bar ec-bar" id="ecBar"></div></div>'
+        +'<div class="dd-precip-num">'+ecPrecip.toFixed(1)+' mm</div>'
+      +'</div>'
+      +(yrPrecip!=null
+        ? '<div class="dd-precip-src">'
+            +'<span class="badge b-yr" style="margin-bottom:4px">Yr.no</span>'
+            +'<div class="dd-precip-bar-wrap"><div class="dd-precip-bar yr-bar" id="yrBar"></div></div>'
+            +'<div class="dd-precip-num">'+yrPrecip.toFixed(1)+' mm</div>'
+          +'</div>'
+        : '')
+    +'</div>'
+
+    // Time-for-time nedbørsgraf
+    +(hours.length>2
+      ? '<div class="dd-chart-label" style="margin-top:.85rem;margin-bottom:.4rem">Time for time (Yr.no)</div>'
+        +'<canvas id="ddCanvas" aria-label="Nedbør time for time"></canvas>'
+      : '')
+
+    // Vind + detaljer
+    +'<div class="dd-stats" style="margin-top:.85rem">'
+      +'<div class="dd-stat">'
+        +'<div class="dd-stat-label">Vind</div>'
+        +'<div class="dd-stat-val" style="display:flex;align-items:center;gap:4px;justify-content:center">'
+          +windArrowSVG(avgWindDir, avgWind)
+          +'<span style="font-size:13px">'+windDesc(avgWind)+'</span>'
+        +'</div>'
+        +'<div style="font-size:11px;color:var(--text3);margin-top:2px">'
+          +(avgWind!=null?Math.round(avgWind)+' m/s':'')
+          +(maxWind!=null?' · max '+Math.round(maxWind):'')
+        +'</div>'
+      +'</div>'
+      +'<div class="dd-stat">'
+        +'<div class="dd-stat-label">Luftfugt.</div>'
+        +'<div class="dd-stat-val">'+(avgHumid!=null?avgHumid+'%':'–')+'</div>'
+      +'</div>'
+      +'<div class="dd-stat">'
+        +'<div class="dd-stat-label">Maks / Min</div>'
+        +'<div class="dd-stat-val" style="font-size:14px">'
+          +(ec.tmax!=null?Math.round(ec.tmax)+'°':'–')+' / '+(ec.tmin!=null?Math.round(ec.tmin)+'°':'–')
+        +'</div>'
+      +'</div>'
+    +'</div>'
+
+    +'<div class="dd-sources" style="margin-top:.6rem">'+precipBadge+'</div>';
 
   el.classList.add('open');
-  el.querySelector('.dd-close').addEventListener('click',()=>{
-    el.classList.remove('open');
-  });
+  el.querySelector('.dd-close').addEventListener('click',()=>el.classList.remove('open'));
 
-  if(hours.length>2){
-    requestAnimationFrame(()=>drawDetailChart(hours));
-  }
+  // Animér nedbørsbjælker
+  requestAnimationFrame(()=>{
+    const maxP = Math.max(ecPrecip, yrPrecip||0, 0.1);
+    const ecBar = document.getElementById('ecBar');
+    const yrBar = document.getElementById('yrBar');
+    if(ecBar) ecBar.style.width = Math.min((ecPrecip/maxP)*100,100)+'%';
+    if(yrBar && yrPrecip!=null) yrBar.style.width = Math.min((yrPrecip/maxP)*100,100)+'%';
+    if(hours.length>2) drawPrecipChart(hours);
+  });
 }
 
-function drawDetailChart(hours){
+function drawPrecipChart(hours){
   const canvas = document.getElementById('ddCanvas');
   if(!canvas) return;
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio||1;
   const w = canvas.offsetWidth;
-  const h = 80;
+  const h = 70;
   canvas.width = w*dpr; canvas.height = h*dpr;
   canvas.style.width = w+'px'; canvas.style.height = h+'px';
   ctx.scale(dpr, dpr);
 
-  const temps = hours.filter(h=>h.temp!=null);
-  if(temps.length<2) return;
-  const precips = hours.map(h=>h.precip);
-  const maxPrecip = Math.max(...precips, 0.1);
-
-  const pad = {top:8, right:8, bottom:22, left:28};
+  const pad = {top:6, right:6, bottom:20, left:28};
   const cw = w-pad.left-pad.right;
   const ch = h-pad.top-pad.bottom;
-  const tVals = temps.map(h=>h.temp);
-  const minT = Math.min(...tVals)-1;
-  const maxT = Math.max(...tVals)+1;
 
-  const xs = i => pad.left+(i/(hours.length-1))*cw;
-  const yt = v => pad.top+ch-((v-minT)/(maxT-minT))*ch;
+  const precips = hours.map(hh=>hh.precip||0);
+  const maxP = Math.max(...precips, 0.5);
+  const barW = cw/hours.length;
 
-  // Nedbørssøjler
-  hours.forEach((h,i)=>{
-    if(!h.precip) return;
-    const bh = (h.precip/maxPrecip)*(ch*0.35);
-    const x = xs(i);
-    ctx.fillStyle='rgba(45,110,214,0.2)';
-    ctx.fillRect(x-3, pad.top+ch-bh, 6, bh);
+  // Grid
+  ctx.strokeStyle='rgba(26,58,107,0.06)'; ctx.lineWidth=1;
+  [0,0.5,1].forEach(t=>{
+    const y = pad.top+ch*(1-t);
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(pad.left+cw,y); ctx.stroke();
   });
 
-  // Temperatur fill
-  ctx.beginPath();
-  let firstDrawn = true;
-  hours.forEach((h,i)=>{ if(h.temp==null) return; firstDrawn?(ctx.moveTo(xs(i),yt(h.temp)),firstDrawn=false):ctx.lineTo(xs(i),yt(h.temp)); });
-  ctx.lineTo(xs(hours.length-1),pad.top+ch); ctx.lineTo(xs(0),pad.top+ch);
-  ctx.closePath(); ctx.fillStyle='rgba(45,110,214,0.07)'; ctx.fill();
+  // Søjler
+  hours.forEach((hh,i)=>{
+    const p = hh.precip||0;
+    if(p<0.05) return;
+    const bh = (p/maxP)*ch;
+    const x = pad.left + i*barW + barW*.1;
+    const bw = barW*.8;
+    // Farv efter intensitet
+    const intensity = p/maxP;
+    const r = Math.round(45 + intensity*50);
+    const g = Math.round(110 - intensity*60);
+    const b = Math.round(214);
+    ctx.fillStyle = `rgba(${r},${g},${b},${0.5+intensity*0.45})`;
+    ctx.beginPath();
+    ctx.roundRect(x, pad.top+ch-bh, bw, bh, 2);
+    ctx.fill();
+    // Vis mm oven på høje søjler
+    if(p>0.5){
+      ctx.fillStyle='rgba(26,58,107,0.7)';
+      ctx.font='8px DM Mono,monospace';
+      ctx.textAlign='center';
+      ctx.fillText(p.toFixed(1), x+bw/2, pad.top+ch-bh-2);
+    }
+  });
 
-  // Temperatur linje
-  ctx.beginPath();
-  ctx.strokeStyle='#2d6ed6'; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.lineCap='round';
-  let fl=true;
-  hours.forEach((h,i)=>{ if(h.temp==null) return; fl?(ctx.moveTo(xs(i),yt(h.temp)),fl=false):ctx.lineTo(xs(i),yt(h.temp)); });
-  ctx.stroke();
-
-  // Y labels
+  // Y-akse labels
   ctx.fillStyle='rgba(74,106,153,0.7)'; ctx.font='9px DM Mono,monospace'; ctx.textAlign='right';
-  [Math.round(minT+0.5), Math.round(maxT-0.5)].forEach(v=>ctx.fillText(v+'°',pad.left-3,yt(v)+3));
+  [0, Math.round(maxP*10)/10].forEach((v,i)=>{
+    const y = pad.top+ch - (v/maxP)*ch;
+    ctx.fillText(v+'mm', pad.left-3, y+3);
+  });
 
-  // X labels – vis hver 6. time
-  ctx.textAlign='center'; ctx.font='9px DM Sans,sans-serif'; ctx.fillStyle='rgba(74,106,153,0.6)';
-  hours.forEach((h,i)=>{ if(h.hour%6===0) ctx.fillText(h.hour+'h', xs(i), h-6); });
+  // X-akse timemarkering (hver 6. time)
+  ctx.fillStyle='rgba(74,106,153,0.6)'; ctx.font='9px DM Sans,sans-serif'; ctx.textAlign='center';
+  hours.forEach((hh,i)=>{
+    if(hh.hour%6===0){
+      const x = pad.left + i*barW + barW/2;
+      ctx.fillText(hh.hour+'h', x, h-4);
+    }
+  });
 }
+
 
 // ── Init ──
 function showLocChip(loc){
